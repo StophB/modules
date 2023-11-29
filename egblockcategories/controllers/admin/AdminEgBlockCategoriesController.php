@@ -1,5 +1,18 @@
 <?php
+/**
+ * 2020  (c)  Egio digital
+ *
+ * MODULE EgBlockCategories
+ *
+ * @author    Egio digital
+ * @copyright Copyright (c) , Egio digital
+ * @license   Commercial
+ * @version    1.0.0
+ */
 
+/**
+ * @property EgBlockCategoriesClass $object
+ */
 class AdminEgBlockCategoriesController extends ModuleAdminController
 {
     protected $position_identifier = 'id_eg_block_categories';
@@ -15,16 +28,9 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
         $this->toolbar_btn = null;
         $this->list_no_link = true;
         $this->lang = true;
-
         $this->addRowAction('edit');
         $this->addRowAction('delete');
-
-        Shop::addTableAssociation(
-            $this->table,
-            [
-                'type' => 'shop'
-            ]
-        );
+        Shop::addTableAssociation($this->table, ['type' => 'shop']);
 
         parent::__construct();
 
@@ -43,7 +49,7 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
             'image' => [
                 'title' => $this->l('Image'),
                 'type' => 'text',
-                'callback' => 'showImage',
+                'callback' => 'showCategory',
                 'callback_object' => 'EgBlockCategoriesClass',
                 'class' => 'fixed-width-xxl',
                 'search' => false,
@@ -74,7 +80,10 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
         ];
     }
 
-
+    /**
+     * AdminController::init() override
+     * @see AdminController::init()
+     */
     public function init()
     {
         parent::init();
@@ -82,6 +91,21 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
         if (Shop::getContext() == Shop::CONTEXT_SHOP && Shop::isFeatureActive()) {
             $this->_where = ' AND b.`id_shop` = ' . (int)Context::getContext()->shop->id;
         }
+    }
+
+    /**
+     * @see AdminController::initPageHeaderToolbar()
+     */
+    public function initPageHeaderToolbar()
+    {
+        if (empty($this->display)) {
+            $this->page_header_toolbar_btn['new_category'] = array(
+                'href' => self::$currentIndex.'&addeg_block_categories&token='.$this->token,
+                'desc' => $this->l('Add new category'),
+                'icon' => 'process-icon-new'
+            );
+        }
+        parent::initPageHeaderToolbar();
     }
 
     protected function stUploadImage($item)
@@ -129,33 +153,54 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
         }
     }
 
+    /**
+     * AdminController::postProcess() override
+     * @see AdminController::postProcess()
+     */
     public function postProcess()
     {
         if ($this->action && $this->action == 'save') {
-            $image = $this->stUploadImage('image');
-            if (isset($image['image']) && !empty($image['image'])) {
-                $_POST['image'] = $image['image'];
+            foreach (Language::getLanguages(true) as $lang) {
+                $image = $this->stUploadImage('image_'.$lang['id_lang']);
+                if (isset($image['image']) && !empty($image['image'] )) {
+                    $_POST['image_'.$lang['id_lang']]= $image['image'];
+                }
             }
         }
 
+        // Delete Images EG Block Categories
         if (Tools::isSubmit('forcedeleteImage') || Tools::getValue('deleteImage')) {
             $champ = Tools::getValue('champ');
             $imgValue = Tools::getValue('image');
             EgBlockCategoriesClass::updateEgCategorieImage($champ, $imgValue);
             if (Tools::isSubmit('forcedeleteImage')) {
-                Tools::redirectAdmin(self::$currentIndex . '&token=' . Tools::getAdminTokenLite('AdminEgBlockCategories'));
+                Tools::redirectAdmin(self::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminEgBlockCategories'));
             }
         }
 
         return parent::postProcess();
     }
 
+    /**
+     * @see AdminController::initProcess()
+     */
     public function initProcess()
     {
         $this->context->smarty->assign([
             'uri' => $this->module->getPathUri()
         ]);
         parent::initProcess();
+    }
+
+    public function getHookList()
+    {
+        $hooks = array();
+        foreach ($this->myHook as $key => $hook)
+        {
+            $hooks[$key]['key'] = $hook;
+            $hooks[$key]['name'] = $hook;
+        }
+        return $hooks;
     }
 
     public function renderForm()
@@ -170,6 +215,7 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
                 'title' => $this->l('Page'),
                 'icon' => 'icon-folder-close'
             ],
+            // custom template
             'input' => [
                 [
                     'type' => 'text',
@@ -186,17 +232,17 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
                     'desc' => $this->l('Please enter a subtitle for the category.'),
                 ],
                 [
-                    'type' => 'text',
-                    'label' => $this->l('Url:'),
-                    'name' => 'url',
-                    'desc' => $this->l('Please enter a url for the category.'),
-                ],
-                [
-                    'type' => 'file',
+                    'type' => 'file_lang',
                     'label' => $this->l('Image:'),
                     'name' => 'image',
                     'delete_url' => self::$currentIndex . '&' . $this->identifier . '=' . $obj->id . '&token=' . $this->token . '&champ=image&deleteImage=1',
-                    'desc' => $this->l('Upload an image for your category.')
+                    'desc' => $this->l('Upload an image for the category.')
+                ],
+                [
+                    'type' => 'text',
+                    'label' => $this->l('Alt:'),
+                    'name' => 'alt',
+                    'desc' => $this->l('Please enter an alternate text for the category.'),
                 ],
                 [
                     'type' => 'switch',
@@ -235,6 +281,9 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
         return parent::renderForm();
     }
 
+    /**
+     * Update Positions Category
+     */
     public function ajaxProcessUpdatePositions()
     {
         $way = (int)(Tools::getValue('way'));
@@ -259,17 +308,4 @@ class AdminEgBlockCategoriesController extends ModuleAdminController
             }
         }
     }
-
-
-    // public function initPageHeaderToolbar()
-    // {
-    //     if (empty($this->display)) {
-    //         $this->page_header_toolbar_btn['new_egblockcategories'] = [
-    //             'href' => self::$currentIndex . '&addegblockcategories&token=' . $this->token,
-    //             'desc' => $this->l('Add new block category'),
-    //             'icon' => 'process-icon-new'
-    //         ];
-    //     }
-    //     parent::initPageHeaderToolbar();
-    // }
 }

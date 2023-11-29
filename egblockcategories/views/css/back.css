@@ -1,27 +1,39 @@
-/**
-* 2007-2023 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Academic Free License (AFL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/afl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2023 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*
-* Don't forget to prefix your containers with your own identifier
-* to avoid any conflicts with others containers.
-*/
+/*
+ * Custom code goes here.
+ * A template should always ship with an empty back.css
+ */
+
+
+.eg-page-head {
+    padding: 10px 0;
+}
+.eg-page-head a{
+    color:#fff;*text-decoration:none;
+}
+.eg-page-head .eg-page-head-tabs{
+    clear:left;
+}
+.eg-page-head .eg-page-head-tabs ul{
+    background-color: #fff;
+    border:1px solid #dfdfdf;
+    border-radius: 5px;
+    font-weight:400;
+}
+.eg-page-head .eg-page-head-tabs li{
+    display:inline-block;
+}
+.eg-page-head .eg-page-head-tabs li a {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    color: #6c868e;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: .9375rem 1.25rem;
+    vertical-align: middle;
+}
+
+.eg-page-head .eg-page-head-tabs li a.current {
+    background-color: #f4f9fb;
+    border-bottom: 3px solid #3ed2f0;
+    color: #363a41;
+}

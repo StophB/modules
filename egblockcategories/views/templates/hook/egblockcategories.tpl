@@ -1,4 +1,4 @@
-{if isset($categories) && !empty($categories)}
+{if isset($categories) && !empty($categories) && $status == 1}
     <div class="row">
         {foreach from=$categories item=category}
             <div class="col-xs-6 col-md-3">
@@ -7,6 +7,7 @@
                         class="replace-2x img-responsive"
                         src="{$uri}{$category.image|escape:'html':'UTF-8'}"
                         width="100px;"
+                        alt="{if $category.alt}{$category.alt|escape:'htmlall':'UTF-8'}{/if}"
                     />
                 {/if}
                 {if isset($category.title) && !empty($category.title)}

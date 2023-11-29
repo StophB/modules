@@ -1,65 +1,47 @@
 <?php
 
 /**
- * 2007-2023 PrestaShop
+ * 2023  (c)  Egio digital
  *
- * NOTICE OF LICENSE
+ * MODULE EgBlockGategories
  *
- * This source file is subject to the Academic Free License (AFL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/afl-3.0.php
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * DISCLAIMER
- *
- * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
- * versions in the future. If you wish to customize PrestaShop for your
- * needs please refer to http://www.prestashop.com for more information.
- *
- *  @author    PrestaShop SA <contact@prestashop.com>
- *  @copyright 2007-2023 PrestaShop SA
- *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
- *  International Registered Trademark & Property of PrestaShop SA
+ * @author    Egio digital
+ * @copyright Copyright (c) , Egio digital
+ * @license   Commercial
+ * @version    1.0.0
  */
 
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once(_PS_MODULE_DIR_ . "egblockcategories/classes/EgBlockCategoriesClass.php");
-
+include_once(dirname(__FILE__).'/classes/EgBlockCategoriesClass.php');
 
 class EgBlockCategories extends Module
 {
+    protected $_html = '';
     protected $templateFile;
     protected $domain;
-    protected $img_path;
 
     public function __construct()
     {
         $this->name = 'egblockcategories';
         $this->tab = 'front_office_features';
         $this->version = '1.0.0';
-        $this->author = 'MST';
+        $this->author = 'egio digital';
         $this->need_instance = 0;
-
+        $this->secure_key = Tools::encrypt($this->name);
         $this->bootstrap = true;
+        $this->ps_versions_compliancy = ['min' => '1.7', 'max' => _PS_VERSION_];
 
         parent::__construct();
 
         $this->domain = 'Modules.Egblockcategories.Egblockcategories';
         $this->displayName = $this->trans('Eg Block Categories', [], $this->domain);
-        $this->description = $this->l('Egio Block categories Module');
+        $this->description = $this->l('Display Block categories in home page', [], $this->domain);
 
-        $this->img_path = $this->_path . 'views/img/';
-        $this->ps_versions_compliancy = [
-            'min' => '1.7',
-            'max' => _PS_VERSION_
-        ];
-
+        $this->confirmUninstall = $this->trans('Are you sure you want to uninstall?', [], $this->domain);
+        $this->img_path = $this->_path.'views/img/';
         $this->templateFile = 'module:egblockcategories/views/templates/hook/egblockcategories.tpl';
     }
 
@@ -134,24 +116,25 @@ class EgBlockCategories extends Module
         return true;
     }
 
+    /**
+     * @see Module::install()
+     */
     public function install()
     {
-        Configuration::updateValue('EG_CATEGORIE_LIMIT', '');
-        Configuration::updateValue('EG_CATEGORIE_ACTIVE', '');
-
         include(dirname(__FILE__) . '/sql/install.php');
 
         return parent::install()
             && $this->createTabs()
             && $this->registerHook('header')
+            && $this->registerHook('backOfficeHeader')
             &&  $this->registerHook('displayHome');
     }
 
+    /**
+     * @see Module::uninstall()
+     */
     public function uninstall()
     {
-        Configuration::deleteByName('EG_CATEGORIE_LIMIT');
-        Configuration::deleteByName('EG_CATEGORIE_ACTIVE');
-
         include(dirname(__FILE__) . '/sql/uninstall.php');
 
         $this->removeTabs('AdminEgBlockCategories');
@@ -161,65 +144,80 @@ class EgBlockCategories extends Module
         return parent::uninstall();
     }
 
-        /**
-     * Add the CSS & JavaScript files you want to be added on the FO.
-     */
-    public function hookHeader()
-    {
-        $this->context->controller->addJS($this->_path . '/views/js/front.js');
-        $this->context->controller->addCSS($this->_path . '/views/css/front.css');
-    }
-
     public function isUsingNewTranslationSystem()
     {
         return true;
     }
 
-    public function hookDisplayHome()
+    public function renderList()
     {
-        $limit = Configuration::get('EG_CATEGORIE_LIMIT');
-        $active = Configuration::get('EG_CATEGORIE_ACTIVE');
-        $categories = EgBlockCategoriesClass::getCategories();
-
-        $this->context->smarty->assign([
-            'categories' => $categories,
-            'uri' => $this->img_path,
-            'active' => $active,
-        ]);
-
-        return $this->display(__FILE__, 'views/templates/hook/egblockcategories.tpl');
+        $idTab = (int) Tab::getIdFromClassName('AdminModules');
+        $idEmployee = (int) $this->context->employee->id;
+        $token = Tools::getAdminToken('AdminModules'.$idTab.$idEmployee);
+        $this->context->smarty->assign(
+            array(
+                'linkConfigBlockCategories' => $this->context->link->getAdminLink('AdminEgConfBlockCategories'),
+                'linkManageBlockCategories' => $this->context->link->getAdminLink('AdminEgBlockCategories'),
+            )
+        );
+        $template = _PS_MODULE_DIR_ . $this->name .'/views/templates/admin/_configure/helpers/list/list_header.tpl';
+        return $this->context->smarty->fetch($template);
     }
 
     /**
-     * Load the configuration form
+     * Add the CSS & JavaScript files you want to be loaded in the BO.
+     */
+    public function hookBackOfficeHeader()
+    {
+        $this->context->controller->addCSS($this->_path.'views/css/back.css');
+    }
+
+    public function clearCache()
+    {
+        $this->_clearCache($this->templateFile);
+    }
+
+    public function hookDisplayHome()
+    {
+        if (!$this->isCached($this->templateFile, $this->getCacheId('egblockcategories'))) {
+            $count = (int)Configuration::get('EG_COUNT_CATEGORY');
+            $limit = isset($count) ? $count : null;
+            $status = Configuration::get('EG_CATEGORY_STATUS');
+            $categories = EgBlockCategoriesClass::getCategoriesFromHook($limit);
+            $this->context->smarty->assign(array(
+                'categories' => $categories,
+                'status' => $status,
+                'uri' => $this->img_path,
+            ));
+        }
+        return $this->fetch($this->templateFile, $this->getCacheId('egblockcategories'));
+    }
+
+    /**
+     * @return mixed
      */
     public function getContent()
     {
-        /**
-         * If values have been submitted in the form, process.
-         */
-        if (((bool)Tools::isSubmit('submitEgblockcategoriesModule')) == true) {
-            $this->postProcess();
+        if (Tools::isSubmit('submitModule')) {
+            Configuration::updateValue('EG_COUNT_CATEGORY', Tools::getValue('EG_COUNT_CATEGORY'));
+            Configuration::updateValue('EG_CATEGORY_STATUS', Tools::getValue('EG_CATEGORY_STATUS'));
         }
 
-        return $this->renderForm();
+        $this->_html .= $this->renderList();
+        $this->_html .= $this->renderForm();
+        return $this->_html;
     }
 
-    /**
-     * Create the form that will be displayed in the configuration of your module.
-     */
     protected function renderForm()
     {
         $helper = new HelperForm();
-
         $helper->show_toolbar = false;
         $helper->table = $this->table;
         $helper->module = $this;
         $helper->default_form_language = $this->context->language->id;
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-
         $helper->identifier = $this->identifier;
-        $helper->submit_action = 'submitEgblockcategoriesModule';
+        $helper->submit_action = 'submitModule';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
@@ -234,70 +232,57 @@ class EgBlockCategories extends Module
     }
 
     /**
-     * Create the structure of your form.
+     * @return array
+     */
+    public function getConfigFieldsValues()
+    {
+        return array(
+            'EG_COUNT_CATEGORY' => Configuration::get('EG_COUNT_CATEGORY'),
+            'EG_CATEGORY_STATUS' => Configuration::get('EG_CATEGORY_STATUS'),
+        );
+    }
+
+    /**
+     * @return array
      */
     protected function getConfigForm()
     {
         return [
             'form' => [
+                'tinymce' => true,
                 'legend' => [
-                    'title' => $this->l('Settings'),
+                    'title' => $this->trans('Configure Block Categories', [], $this->domain),
                     'icon' => 'icon-cogs',
                 ],
                 'input' => [
                     [
+                        'type' => 'text',
+                        'label' => $this->trans('Number of categories to be displayed', [], $this->domain),
+                        'name' => 'EG_COUNT_CATEGORY',
+                    ],
+                    [
                         'type' => 'switch',
-                        'label' => $this->l('Active'),
-                        'name' => 'EG_CATEGORIE_ACTIVE',
+                        'label' => $this->trans('Displayed', [], $this->domain),
+                        'name' => 'EG_CATEGORY_STATUS',
                         'is_bool' => true,
                         'values' => [
                             [
                                 'id' => 'active_on',
-                                'value' => true,
-                                'label' => $this->l('Enabled')
+                                'value' => 1,
+                                'label' => $this->trans('Enabled', [], $this->domain)
                             ],
                             [
                                 'id' => 'active_off',
-                                'value' => false,
-                                'label' => $this->l('Disabled')
+                                'value' => 0,
+                                'label' => $this->trans('Disabled', [], $this->domain)
                             ]
                         ],
                     ],
-                    [
-                        'type' => 'number',
-                        'desc' => $this->l('Enter a limit'),
-                        'name' => 'EG_CATEGORIE_LIMIT',
-                        'label' => $this->l('Limit'),
-                        'required' => true
-                    ]
                 ],
                 'submit' => [
-                    'title' => $this->l('Save'),
+                    'title' => $this->trans('Save', [], $this->domain),
                 ],
             ],
         ];
-    }
-
-    /**
-     * Set values for the inputs.
-     */
-    protected function getConfigFormValues()
-    {
-        return [
-            'EG_CATEGORIE_LIMIT' => Configuration::get('EG_CATEGORIE_LIMIT'),
-            'EG_CATEGORIE_ACTIVE' => Configuration::get('EG_CATEGORIE_ACTIVE')
-        ];
-    }
-
-    /**
-     * Save form data.
-     */
-    protected function postProcess()
-    {
-        $form_values = $this->getConfigFormValues();
-
-        foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
-        }
     }
 }
