@@ -1,0 +1,57 @@
+/*
+ * Custom code goes here.
+ * A template should always ship with an empty front.css
+ */
+
+.eg-banner-position-info {
+    text-transform: uppercase;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    color: #494e53;
+}
+
+.eg-banner-position-info.title-light {
+    font-size: 22px;
+    display: block;
+    font-family: BrownPro;
+    margin: 3px 0;
+    letter-spacing: 4px;
+    line-height: 25px;
+}
+
+.eg-banner-position-info span.subtitle-bold {
+    font-size: 39px;
+    font-family: BrownPro-BoldReal;
+    display: block;
+    margin: 3px 0;
+    letter-spacing: 3px;
+    line-height: 40px;
+}
+
+.eg-banner-position-info.description-light {
+    font-size: 22px;
+    display: block;
+    font-family: BrownPro;
+    margin: 3px 0;
+    letter-spacing: 2px;
+    line-height: 25px;
+    text-transform: none;
+}
+
+.eg-banner-button{
+    position: relative;
+    bottom: 80px;
+}
+
+.button.medium-regular, button.medium-regular {
+    padding: 0 30px;
+    line-height: 40px;
+    height: 30px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-family: BrownPro;
+    font-size: 16px;
+    letter-spacing: 1px;
+    background: #fff;
+    color: #494e53;
+}

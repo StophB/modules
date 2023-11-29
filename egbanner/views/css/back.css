@@ -1,0 +1,39 @@
+/*
+ * Custom code goes here.
+ * A template should always ship with an empty back.css
+ */
+
+
+.eg-page-head {
+    padding: 10px 0;
+}
+.eg-page-head a{
+    color:#fff;*text-decoration:none;
+}
+.eg-page-head .eg-page-head-tabs{
+    clear:left;
+}
+.eg-page-head .eg-page-head-tabs ul{
+    background-color: #fff;
+    border:1px solid #dfdfdf;
+    border-radius: 5px;
+    font-weight:400;
+}
+.eg-page-head .eg-page-head-tabs li{
+    display:inline-block;
+}
+.eg-page-head .eg-page-head-tabs li a {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    color: #6c868e;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: .9375rem 1.25rem;
+    vertical-align: middle;
+}
+
+.eg-page-head .eg-page-head-tabs li a.current {
+    background-color: #f4f9fb;
+    border-bottom: 3px solid #3ed2f0;
+    color: #363a41;
+}
